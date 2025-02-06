@@ -1,0 +1,236 @@
+name: cbl_native_assets release
+
+on:
+  push:
+    tags:
+      - 'cbl_native_assets-v*'
+# i.e.
+# git tag cbl_native_assets-v1.0.0
+# git push origin cbl_native_assets-v1.0.0
+
+jobs:
+  create-release:
+    runs-on: ubuntu-22.04
+    outputs:
+      upload-url: ${{ steps.create-release.outputs.upload_url }}
+      tag: ${{ steps.set-outputs.outputs.tag }}
+      release: ${{ steps.set-outputs.outputs.release }}
+    steps:
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Set outputs
+        id: set-outputs
+        run: |
+          echo "::set-output name=tag::${GITHUB_REF/refs\/tags\//}"
+          echo "::set-output name=release::${GITHUB_REF/refs\/tags\/cbl_native_assets-v/}"
+
+  linux:
+    needs: create-release
+    name: Linux
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Setup Melos
+        run: dart pub global activate melos
+
+      - name: Setup CBL Dart dev tools
+        run: melos run activate:cbd
+
+      - name: Build release
+        run: |
+          cd packages/cbl_native_assets
+          # Generate bindings
+          dart run ffigen --config cblite_native_assets_ffigen.yaml
+          dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          
+          # Create asset spec
+          cat > build.yaml << EOF
+          targets:
+            $default:
+              assets:
+                - lib/**
+              platform:
+                linux:
+                  link_mode: dynamic
+                  output: libcblite.so
+          EOF
+          
+          # Package assets
+          tar -czf cbl_native_assets-linux-x86_64.tar.gz lib/ build.yaml
+
+      - name: Upload archives
+        uses: alexellis/upload-assets@0.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-linux-x86_64.tar.gz"]'
+
+  macos-x86_64:
+    needs: create-release
+    name: macOS (Intel)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Setup Melos
+        run: dart pub global activate melos
+
+      - name: Setup CBL Dart dev tools
+        run: melos run activate:cbd
+
+      - name: Get CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Build release
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.15"
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+          SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        run: |
+          cd packages/cbl_native_assets
+          # Generate bindings
+          arch -x86_64 dart run ffigen --config cblite_native_assets_ffigen.yaml
+          arch -x86_64 dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          
+          # Create asset spec
+          cat > build.yaml << EOF
+          targets:
+            $default:
+              assets:
+                - lib/**
+              platform:
+                macos:
+                  link_mode: dynamic
+                  output: libcblite.dylib
+                  arch: x86_64
+          EOF
+          
+          # Package assets
+          tar -czf cbl_native_assets-macos-x86_64.tar.gz lib/ build.yaml
+
+      - name: Upload archives
+        uses: alexellis/upload-assets@0.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-macos-x86_64.tar.gz"]'
+
+  macos-arm64:
+    needs: create-release
+    name: macOS (Apple Silicon)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Setup Melos
+        run: dart pub global activate melos
+
+      - name: Setup CBL Dart dev tools
+        run: melos run activate:cbd
+
+      - name: Get CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Build release
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+          SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        run: |
+          cd packages/cbl_native_assets
+          # Generate bindings
+          arch -arm64 dart run ffigen --config cblite_native_assets_ffigen.yaml
+          arch -arm64 dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          
+          # Create asset spec
+          cat > build.yaml << EOF
+          targets:
+            $default:
+              assets:
+                - lib/**
+              platform:
+                macos:
+                  link_mode: dynamic
+                  output: libcblite.dylib
+                  arch: arm64
+          EOF
+          
+          # Package assets
+          tar -czf cbl_native_assets-macos-arm64.tar.gz lib/ build.yaml
+
+      - name: Upload archives
+        uses: alexellis/upload-assets@0.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-macos-arm64.tar.gz"]'
+
+  windows:
+    needs: create-release
+    name: Windows
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Setup Melos
+        run: dart pub global activate melos
+
+      - name: Setup CBL Dart dev tools
+        run: melos run activate:cbd
+
+      - name: Get CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Build release
+        shell: bash
+        run: |
+          cd packages/cbl_native_assets
+          # Generate bindings
+          dart run ffigen --config cblite_native_assets_ffigen.yaml
+          dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          
+          # Create asset spec
+          cat > build.yaml << EOF
+          targets:
+            $default:
+              assets:
+                - lib/**
+              platform:
+                windows:
+                  link_mode: dynamic
+                  output: cblite.dll
+          EOF
+          
+          # Package assets
+          tar -czf cbl_native_assets-windows-x86_64.tar.gz lib/ build.yaml
+
+      - name: Upload archives
+        uses: alexellis/upload-assets@0.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-windows-x86_64.tar.gz"]' 

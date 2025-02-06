@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - docs/**
-  pull_request:
-    paths-ignore:
-      - docs/**
-  schedule:
-    - cron: '0 0 * * *'
+  workflow_dispatch:
+#    paths-ignore:
+#      - docs/**
+#  pull_request:
+#    paths-ignore:
+#      - docs/**
+#  schedule:
+#    - cron: '0 0 * * *'
 
 concurrency:
   group: ${{ github.ref }}
@@ -108,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [cbl, cbl_sentry, cbl_generator]
+        package: [cbl, cbl_sentry, cbl_generator, cbl_native_assets]
         dart: [stable, beta]
         embedder: [standalone]
         os: [Ubuntu]
@@ -177,13 +178,18 @@ jobs:
           - Ubuntu
           - Windows
         exclude:
+          - embedder: flutter
+            os: Windows
+          - embedder: flutter
+            os: macOS
+          - embedder: flutter
+            os: iOS
+          - embedder: flutter
+            os: Android
           - embedder: standalone
             os: iOS
           - embedder: standalone
             os: Android
-          # TODO: Get iOS tests to launch again in CI
-          - embedder: flutter
-            os: iOS
     # Flutter + Ubuntu is flaky, likely because of a bug in CBL C, so we allow it to fail for now.
     continue-on-error:
       ${{ matrix.embedder == 'flutter' && matrix.os == 'Ubuntu' }}
@@ -284,6 +290,7 @@ jobs:
           ./tools/ci-steps.sh uploadCoverageData "e2e.cbl.${{ matrix.embedder }}.${{ matrix.os }}"
 
   test-e2e-cbl_flutter_prebuilt:
+    if: false #Ignore as this is only standalone and desktop for now
     name: cbl_flutter_prebuilt E2E tests
     timeout-minutes: 45
     strategy:
@@ -375,7 +382,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [cbl_dart]
+        package: [cbl_dart, cbl_native_assets]
         dart: [stable]
         embedder: [standalone]
         os: [macOS, Ubuntu, Windows]
