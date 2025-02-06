@@ -25,3 +25,7 @@ native_assets:
     - lib/
   windows-x64:
     - lib/
+
+# Scripts to run before analysis and testing
+scripts:
+  prepare: dart run ffigen --config cblite_native_assets_ffigen.yaml && dart run ffigen --config cblitedart_native_assets_ffigen.yaml

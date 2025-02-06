@@ -101,6 +101,10 @@ jobs:
         shell: bash
         run: ./tools/dev-tools.sh bootstrap
 
+      - name: Build native libraries
+        shell: bash
+        run: ./tools/ci-steps.sh buildNativeLibraries
+
       - name: Analyze Dart code
         run: melos analyze --fatal-infos
 
@@ -109,7 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [cbl, cbl_sentry, cbl_generator, cbl_native_assets]
+        package: [cbl, cbl_sentry, cbl_generator]
         dart: [stable, beta]
         embedder: [standalone]
         os: [Ubuntu]
@@ -145,9 +149,11 @@ jobs:
 
       - name: Setup CMake and Ninja
         uses: lukka/get-cmake@latest
+        if: ${{ matrix.package == 'cbl_generator' }}
 
       - name: Build native libraries
         shell: bash
+        if: ${{ matrix.package == 'cbl_generator' }}
         run: ./tools/ci-steps.sh buildNativeLibraries
 
       - name: Run build_runner
@@ -161,6 +167,67 @@ jobs:
         if: ${{ matrix.dart == 'stable' }}
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          ./tools/ci-steps.sh uploadCoverageData "unit.${{ matrix.package }}"
+
+  test-cbl_native_assets:
+    name: cbl_native_assets tests
+    strategy:
+      fail-fast: false
+      matrix:
+        dart: [stable, beta]
+        os: [macOS, Ubuntu, Windows]
+    env:
+      EMBEDDER: standalone
+      TARGET_OS: ${{ matrix.os }}
+      TEST_PACKAGE: cbl_native_assets
+    continue-on-error: ${{ matrix.dart != 'stable' }}
+    runs-on: >-
+      ${{ fromJSON('{
+        "macOS":"macos-15",
+        "Ubuntu":"ubuntu-22.04",
+        "Windows":"windows-2022"
+      }')[matrix.os] }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.flutter-channel }}
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env[format('dart-version-{0}', matrix.dart)] }}
+
+      - name: Setup Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap Dart packages
+        shell: bash
+        run: ./tools/dev-tools.sh bootstrap
+
+      - name: Setup cbd
+        run: melos activate:cbd
+
+      - name: Setup CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Build native libraries
+        shell: bash
+        run: ./tools/ci-steps.sh buildNativeLibraries
+
+      - name: Run tests
+        shell: bash
+        run: ./tools/ci-steps.sh runUnitTests
+
+      - name: Upload coverage data
+        if: ${{ matrix.dart == 'stable' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        shell: bash
         run: |
           ./tools/ci-steps.sh uploadCoverageData "unit.${{ matrix.package }}"
 
@@ -382,7 +449,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [cbl_dart, cbl_native_assets]
+        package: [cbl_dart]
         dart: [stable]
         embedder: [standalone]
         os: [macOS, Ubuntu, Windows]

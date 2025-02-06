@@ -53,11 +53,10 @@ jobs:
 
       - name: Build release
         run: |
-          cd packages/cbl_native_assets
-          # Generate bindings
-          dart run ffigen --config cblite_native_assets_ffigen.yaml
-          dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          # Build native libraries
+          ./tools/ci-steps.sh buildNativeLibraries
           
+          cd packages/cbl_native_assets
           # Create asset spec
           cat > build.yaml << EOF
           targets:
@@ -105,11 +104,10 @@ jobs:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
           SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
         run: |
-          cd packages/cbl_native_assets
-          # Generate bindings
-          arch -x86_64 dart run ffigen --config cblite_native_assets_ffigen.yaml
-          arch -x86_64 dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          # Build native libraries
+          ./tools/ci-steps.sh buildNativeLibraries
           
+          cd packages/cbl_native_assets
           # Create asset spec
           cat > build.yaml << EOF
           targets:
@@ -158,11 +156,10 @@ jobs:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
           SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
         run: |
-          cd packages/cbl_native_assets
-          # Generate bindings
-          arch -arm64 dart run ffigen --config cblite_native_assets_ffigen.yaml
-          arch -arm64 dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          # Build native libraries
+          ./tools/ci-steps.sh buildNativeLibraries
           
+          cd packages/cbl_native_assets
           # Create asset spec
           cat > build.yaml << EOF
           targets:
@@ -208,11 +205,10 @@ jobs:
       - name: Build release
         shell: bash
         run: |
-          cd packages/cbl_native_assets
-          # Generate bindings
-          dart run ffigen --config cblite_native_assets_ffigen.yaml
-          dart run ffigen --config cblitedart_native_assets_ffigen.yaml
+          # Build native libraries
+          ./tools/ci-steps.sh buildNativeLibraries
           
+          cd packages/cbl_native_assets
           # Create asset spec
           cat > build.yaml << EOF
           targets:
