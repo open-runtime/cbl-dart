@@ -1,5 +1,5 @@
 name: cbl_native_assets
-version: 0.0.0
+version: 1.0.0
 description: Provides the Couchbase Lite binaries through Dart native assets.
 homepage: https://github.com/cbl-dart/cbl-dart/tree/main/packages/cbl_native_assets
 repository: https://github.com/cbl-dart/cbl-dart
