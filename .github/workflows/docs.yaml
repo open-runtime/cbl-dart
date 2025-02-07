@@ -1,6 +1,6 @@
-name: Docs
+# name: Docs
 
-on:
+# on:
   # push:
   #   branches:
   #     - main
@@ -10,20 +10,20 @@ on:
   #   paths:
   #     - docs/**
 
-jobs:
-  docs:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Install and build website
-        working-directory: docs
-        run: |
-          npm ci
-          npm run check
-          npm run build
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          folder: docs/build
+# jobs:
+#   docs:
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#       - name: Install and build website
+#         working-directory: docs
+#         run: |
+#           npm ci
+#           npm run check
+#           npm run build
+#       - name: Deploy to GitHub Pages
+#         uses: JamesIves/github-pages-deploy-action@v4
+#         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#         with:
+#           folder: docs/build
