@@ -36,6 +36,8 @@ jobs:
     needs: create-release
     name: Linux
     runs-on: ubuntu-22.04
+    env:
+      TARGET_OS: Ubuntu
     steps:
       - uses: actions/checkout@v4
 
@@ -50,6 +52,10 @@ jobs:
 
       - name: Setup CBL Dart dev tools
         run: melos run activate:cbd
+
+      - name: Bootstrap Dart packages
+        shell: bash
+        run: ./tools/dev-tools.sh bootstrap
 
       - name: Build release
         run: |
@@ -70,19 +76,24 @@ jobs:
           EOF
           
           # Package assets
-          tar -czf cbl_native_assets-linux-x86_64.tar.gz lib/ build.yaml
+          tar -czf cbl_native_assets-linux-x64.tar.gz lib/ build.yaml
 
       - name: Upload archives
         uses: alexellis/upload-assets@0.2.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-linux-x86_64.tar.gz"]'
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-linux-x64.tar.gz"]'
 
   macos-x86_64:
     needs: create-release
     name: macOS (Intel)
     runs-on: macos-14
+    env:
+      TARGET_OS: macOS
+      MACOSX_DEPLOYMENT_TARGET: "10.15"
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+      SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
     steps:
       - uses: actions/checkout@v4
 
@@ -98,11 +109,11 @@ jobs:
       - name: Get CMake and Ninja
         uses: lukka/get-cmake@latest
 
+      - name: Bootstrap Dart packages
+        shell: bash
+        run: ./tools/dev-tools.sh bootstrap
+
       - name: Build release
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.15"
-          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-          SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
         run: |
           # Build native libraries
           ./tools/ci-steps.sh buildNativeLibraries
@@ -122,19 +133,24 @@ jobs:
           EOF
           
           # Package assets
-          tar -czf cbl_native_assets-macos-x86_64.tar.gz lib/ build.yaml
+          tar -czf cbl_native_assets-macos-x64.tar.gz lib/ build.yaml
 
       - name: Upload archives
         uses: alexellis/upload-assets@0.2.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-macos-x86_64.tar.gz"]'
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-macos-x64.tar.gz"]'
 
   macos-arm64:
     needs: create-release
     name: macOS (Apple Silicon)
     runs-on: macos-14
+    env:
+      TARGET_OS: macOS
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+      SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
     steps:
       - uses: actions/checkout@v4
 
@@ -150,11 +166,11 @@ jobs:
       - name: Get CMake and Ninja
         uses: lukka/get-cmake@latest
 
+      - name: Bootstrap Dart packages
+        shell: bash
+        run: ./tools/dev-tools.sh bootstrap
+
       - name: Build release
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "11.0"
-          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-          SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
         run: |
           # Build native libraries
           ./tools/ci-steps.sh buildNativeLibraries
@@ -187,6 +203,8 @@ jobs:
     needs: create-release
     name: Windows
     runs-on: windows-2022
+    env:
+      TARGET_OS: Windows
     steps:
       - uses: actions/checkout@v4
 
@@ -201,6 +219,10 @@ jobs:
 
       - name: Get CMake
         uses: lukka/get-cmake@latest
+
+      - name: Bootstrap Dart packages
+        shell: bash
+        run: ./tools/dev-tools.sh bootstrap
 
       - name: Build release
         shell: bash
@@ -222,11 +244,11 @@ jobs:
           EOF
           
           # Package assets
-          tar -czf cbl_native_assets-windows-x86_64.tar.gz lib/ build.yaml
+          tar -czf cbl_native_assets-windows-x64.tar.gz lib/ build.yaml
 
       - name: Upload archives
         uses: alexellis/upload-assets@0.2.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-windows-x86_64.tar.gz"]' 
+          asset_paths: '["./packages/cbl_native_assets/cbl_native_assets-windows-x64.tar.gz"]' 
